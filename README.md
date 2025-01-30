@@ -1,4 +1,4 @@
-# Video Annotation Tool
+# Rotation Visualization Tool
 
 ## Installation
 
@@ -18,11 +18,13 @@ conda create -n venv python=3.11 'libstdcxx-ng>=13' -c conda-forge
 ## Usage
 
 ```bash
-python -m rotviz --mesh <path_to_mesh>
+python -m rotviz --data <path_to_json_data>
 ```
 
+Rotate the mesh with left mouse button or with keys:
 ```
-y - change rotation multiplier between 1, 5, 10 degrees
+y - change rotation multiplier between 1, 2.5, 5, 10 degrees
+u - change depth multiplier between 1, 5, 10
 
 z - increase depth by depth_multiplier
 x - decrease depth by depth_multiplier

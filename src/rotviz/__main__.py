@@ -5,9 +5,9 @@ import matplotlib
 import matplotlib.colors as mcolors
 from matplotlib import pyplot as plt
 import cv2
-
+import json
 from .meshview import MeshViewer
-
+from pathlib import Path
 
 
 #"""
@@ -92,26 +92,47 @@ def fade_colors_with_distance(pts, base_colors, ax):
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Annotate the coarse pose of the object in the image')
-    parser.add_argument('--mesh', '-m', type=str, help='Path to the folder containing the data', required=True)
+    parser.add_argument('--data', type=str, help='Path to the folder containing the data', required=True)
+
+    parser.add_argument('--mesh', '-m', type=str, help='Path to the folder containing the data', default=None)
     parser.add_argument('--focal-length', '-f', type=float, help='Focal length of the camera', default=None)
-    parser.add_argument('--window-size', '-w', type=int, nargs=2, help='Size of the window', default=(900, 900))
-    parser.add_argument('--scale', '-s', type=float, help='Scale of the mesh', default=0.3)
+    parser.add_argument('--window-size', '-w', type=int, nargs=2, help='Size of the window', default=(500, 500))
+    parser.add_argument('--scale', '-s', type=float, help='Scale of the mesh', default=0.2)
     parser.add_argument('--speed', type=float, help='Speed of the rotation with mouse', default=0.6)
     parser.add_argument('--hide-axes', action='store_true', help='Hide the axes')
+    parser.add_argument('--inverse', '-i', action='store_true', help='Inverse the rotation')
+    
     args = parser.parse_args()
+
+    if args.mesh is None:
+        mesh_path = Path(__file__).parent / 'cube.ply'
+        args.mesh = str(mesh_path)
+
+    with open(args.data, 'r') as f:
+        data = json.load(f)
+    rotations = np.array([np.array(x['T_WorldFromCamera'])[:3,:3] for x in data])
+    if args.inverse:
+        rotations = rotations.transpose(0, 2, 1)
+    scores = np.array([x['score'] for x in data])
+    scores -= scores.min()
+    scores /= scores.max()
+    colors = matplotlib.colormaps['viridis'](scores)
+
 
     mesh = trimesh.load_mesh(args.mesh)
     mesh.apply_scale(args.scale)
+
 
     viewer = MeshViewer(mesh,
                         window_name='Mesh',
                         window_size=args.window_size,
                         focal_length=args.focal_length,
                         mouse_speed=args.speed, 
-                        axes_scale=None if args.hide_axes else args.scale)
+                        axes_scale=0.3,
+                        ambient_light=2.0)
     
     pose = viewer.pose
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection='3d')
 
     def setup_ax():
@@ -123,6 +144,7 @@ if __name__ == '__main__':
         ax.set_ylim(-1, 1)
         ax.set_zlim(-1, 1)
         ax.set_box_aspect([1.0, 1.0, 1.0])
+        ax.grid(False)
     
     
     def compute_points():
@@ -131,9 +153,8 @@ if __name__ == '__main__':
         vectors = rotations @ cam_axis
         return vectors
 
-    def plot(event=None):
+    def plot(event=None, colors=colors):
         pts = compute_points()
-        colors = plt.cm.viridis(np.linspace(0, 1, pts.shape[0]))
         colors = fade_colors_with_distance(pts, colors, ax)
 
         # Redraw scatter plot with updated colors
@@ -141,26 +162,14 @@ if __name__ == '__main__':
         ax.scatter(*pts.T, c=colors, s=50, edgecolors=(0,0,0,0.2))
         setup_ax()
         plt.draw()
-        
-    #def plot(event=None):
-    #    ax.scatter(*pose[:3,:3], c=['red', 'green', 'blue'], alpha=1.0)
 
-    rotations = sample_rotations(600)
-    colors = matplotlib.colormaps['viridis'](np.linspace(0, 1, rotations.shape[0]))
-
-    """
-    def plot():
-        cam_axis = pose[2,:3]/np.linalg.norm(pose[2,:3])
-        vectors = rotations @ cam_axis
-        ax.scatter(*vectors.T, c=colors, s=50)
-    """
 
 
     fig.canvas.mpl_connect('motion_notify_event', plot)
     plot()
     plt.show(block=False)
 
-    for pose in viewer.run_yield(always_yield=True):        
+    for pose in viewer.run_yield(delay=50, always_yield=True):        
         if pose is not None:
             ax.clear()
             plot()

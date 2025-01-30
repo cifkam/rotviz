@@ -12,7 +12,7 @@ from pyrender.constants import RenderFlags
 
 
 class Renderer:
-    def __init__(self, width, height, mesh, focal_length=None):
+    def __init__(self, width, height, mesh, focal_length=None, ambient_light=8.0):
         self.width = width
         self.height = height
         self.renderer = pyrender.OffscreenRenderer(width, height)
@@ -22,7 +22,7 @@ class Renderer:
             self.focal_length = focal_length
         self.scene = pyrender.Scene(
             bg_color=np.array([0.0, 0.0, 0.0, 0.0]),
-            ambient_light=np.array([8.0] * 4)
+            ambient_light=np.array([ambient_light] * 4)
         )
         self.camera = pyrender.IntrinsicsCamera(fx=self.focal_length, fy=self.focal_length, cx=width/2, cy=height/2)
         self.renderer = pyrender.OffscreenRenderer(width, height)
@@ -71,25 +71,27 @@ def oriented_angle(a,b):
 
 
 class MeshViewer:
-    def __init__(self, mesh, window_name='Mesh', window_size=(768,768), focal_length=None, axes_scale=None, mouse_speed=1.0, rotate_mouse_button='left'):
+    def __init__(self, mesh, window_name='Mesh', window_size=(768,768), focal_length=None, axes_scale=None, mouse_speed=1.0, rotate_mouse_button='left', ambient_light=8.0, verbose=True):
         assert rotate_mouse_button in ['left', 'middle', None]
         self.rotate_mouse_button = rotate_mouse_button
+
+        self.verbose = verbose
 
         self.mesh = mesh
         self.window_name = window_name
         self.window_size = window_size
-        self.renderer = Renderer(mesh=mesh, width=window_size[1], height=window_size[0], focal_length=focal_length)
+        self.renderer = Renderer(mesh=mesh, width=window_size[1], height=window_size[0], focal_length=focal_length, ambient_light=ambient_light)
         self.axes_scale = axes_scale
         self.mouse_speed = mouse_speed
 
         self.depth = 1.5
         self.pose = np.eye(4)
         self.pose[2,3] = self.depth
-        self.pose[:3,:3] = np.round(pin.exp(np.array([-np.pi/2,0,0])))
+        #self.pose[:3,:3] = np.round(pin.exp(np.array([-np.pi/2,0,0])))
         self.cam_axis = self.pose[2,:3]/np.linalg.norm(self.pose[2,:3])
         
         self.depth_multiplier = [1, 5, 10]
-        self.rotation_multiplier = np.deg2rad([1, 5, 10])
+        self.rotation_multiplier = np.deg2rad([1, 2.5, 5, 10])
         self.last_depth_multipier_idx = 0
         self.last_rotation_multipier_idx = 0
 
@@ -167,10 +169,12 @@ class MeshViewer:
 
             if key == ord('u'):
                 self.last_depth_multipier_idx = (self.last_depth_multipier_idx + 1) % len(self.depth_multiplier)
-                print('Depth multiplier:', self.depth_multiplier[self.last_depth_multipier_idx])
+                if self.verbose:
+                    print('Depth multiplier:', self.depth_multiplier[self.last_depth_multipier_idx])
             elif key == ord('y'):
                 self.last_rotation_multipier_idx = (self.last_rotation_multipier_idx + 1) % len(self.rotation_multiplier)
-                print("Rotation multiplier:", np.round(np.rad2deg(self.rotation_multiplier[self.last_rotation_multipier_idx]), 1))
+                if self.verbose:
+                    print("Rotation multiplier:", np.round(np.rad2deg(self.rotation_multiplier[self.last_rotation_multipier_idx]), 1))
             elif key == 27: # ESC
                 cv2.destroyAllWindows()
                 break
@@ -194,8 +198,10 @@ class MeshViewer:
                 elif key == ord('f'): # reset the pose
                     #self.pose = np.eye(4)
                     #self.pose[2,3] = self.depth
-                    self.pose[:3,:3] = np.round(pin.exp(np.array([-np.pi/2,0,0])))
+                    self.pose[:3,:3] = np.eye(3) #np.round(pin.exp(np.array([-np.pi/2,0,0])))
 
+                if self.verbose and key in [ord(x) for x in ['s', 'w', 'a', 'd', 'e', 'q', 'f']]:
+                    print('Camera forward axis:', self.cam_axis)
                 self._update_pose()
                 self._draw()
             
@@ -256,7 +262,8 @@ class MeshViewer:
                     w = 1
                 else:
                     dot = np.dot(b, m_delta) / (np.linalg.norm(b) * np.linalg.norm(m_delta)) # (-1, 1)
-                    w = np.abs(dot)**2 # # make it easier to rotate just around the "camera forward axis" by squaring the weight
+                    w = np.abs(dot)
+                    w = w**1.5 # make it a bit easier to rotate just around the "camera forward axis"
                      # smooth transition from w=1 to w=0 as the mouse moves away from the origin
                     alpha = 1/(1+np.exp(  (-mouse_dist+50)/20  )) # shifted and scaled sigmoid
                     w = w*alpha + 1*(1-alpha)
