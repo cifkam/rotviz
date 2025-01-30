@@ -1,6 +1,8 @@
 import trimesh
 from argparse import ArgumentParser
 import numpy as np
+import matplotlib
+import matplotlib.colors as mcolors
 from matplotlib import pyplot as plt
 import cv2
 
@@ -29,6 +31,63 @@ def plot_sphere(ax, r=0.98, edgecolor="black", color="w"):
     plot_sphere_v2(ax, r, 30, 12, 0, 2, color=edgecolor)
     plot_sphere_v2(ax, r, 12, 30, 1, 0, color=edgecolor)
 #"""
+
+
+def sample_rotations(n_poses):
+    from scipy.spatial.transform import Rotation as Rot
+    phi = np.sqrt(2.0)
+    psi = 1.533751168755204288118041
+    
+    Q = np.empty(shape=(n_poses,4), dtype=float)
+    rotations = []
+    mesh_poses = []
+    for i in range(n_poses):
+        s = i+0.5
+        r = np.sqrt(s/n_poses)
+        R = np.sqrt(1.0-s/n_poses)
+        alpha = 2.0 * np.pi * s / phi
+        beta = 2.0 * np.pi * s / psi
+        Q[i,0] = r*np.sin(alpha)
+        Q[i,1] = r*np.cos(alpha)
+        Q[i,2] = R*np.sin(beta)
+        Q[i,3] = R*np.cos(beta)
+
+        rotations.append(Rot.from_quat(Q[i]).as_matrix())
+
+        #mesh_pose = np.eye(4)
+        #mesh_pose[:3, 3] = np.array([0, 0, 1.1])
+        #mesh_pose[:3, :3] = self.rotations[-1]
+        #self.mesh_poses.append(mesh_pose)
+    return np.array(rotations)
+
+
+def fade_colors_with_distance(pts, base_colors, ax):
+    x,y,z = pts.T
+    # Get camera angles
+    azim = np.radians(ax.azim)  # Convert to radians
+    elev = np.radians(ax.elev)
+
+    # Compute the viewpoint direction (unit vector)
+    view_dir = np.array([
+        np.cos(elev) * np.cos(azim),
+        np.cos(elev) * np.sin(azim),
+        np.sin(elev)
+    ])
+
+    # Compute the "distance" of each point from the viewer (dot product)
+    distances = x * view_dir[0] + y * view_dir[1] + z * view_dir[2]
+
+    # Normalize distances for transparency effect
+    min_dist, max_dist = np.min(distances), np.max(distances)
+    alpha_values = (distances - min_dist) / (max_dist - min_dist)
+
+    # Enhance fading effect
+    #alpha_values = alpha_values ** 2
+    #alpha_values = np.sqrt(alpha_values)
+
+    # Generate colors with dynamic opacity
+    adjusted_colors = [mcolors.to_rgba(c, alpha=a) for c, a in zip(base_colors, alpha_values)]
+    return adjusted_colors
 
 
 if __name__ == '__main__':
@@ -65,12 +124,39 @@ if __name__ == '__main__':
         ax.set_zlim(-1, 1)
         ax.set_box_aspect([1.0, 1.0, 1.0])
     
-    def plot():
-        #cam_axis = pose[2,:3]/np.linalg.norm(pose[2,:3])
-        #ax.scatter(*cam_axis, c='red', alpha=1.0)
-        ax.scatter(*pose[:3,:3], c=['red', 'green', 'blue'], alpha=1.0)
-        setup_ax()
+    
+    def compute_points():
+        # Multiply the rotation matrices by the camera z-axis vector
+        cam_axis = viewer.pose[2,:3]/np.linalg.norm(viewer.pose[2,:3])
+        vectors = rotations @ cam_axis
+        return vectors
 
+    def plot(event=None):
+        pts = compute_points()
+        colors = plt.cm.viridis(np.linspace(0, 1, pts.shape[0]))
+        colors = fade_colors_with_distance(pts, colors, ax)
+
+        # Redraw scatter plot with updated colors
+        ax.clear()
+        ax.scatter(*pts.T, c=colors, s=50, edgecolors=(0,0,0,0.2))
+        setup_ax()
+        plt.draw()
+        
+    #def plot(event=None):
+    #    ax.scatter(*pose[:3,:3], c=['red', 'green', 'blue'], alpha=1.0)
+
+    rotations = sample_rotations(600)
+    colors = matplotlib.colormaps['viridis'](np.linspace(0, 1, rotations.shape[0]))
+
+    """
+    def plot():
+        cam_axis = pose[2,:3]/np.linalg.norm(pose[2,:3])
+        vectors = rotations @ cam_axis
+        ax.scatter(*vectors.T, c=colors, s=50)
+    """
+
+
+    fig.canvas.mpl_connect('motion_notify_event', plot)
     plot()
     plt.show(block=False)
 
@@ -78,7 +164,6 @@ if __name__ == '__main__':
         if pose is not None:
             ax.clear()
             plot()
-            fig.canvas.draw()
         
         if not plt.get_fignums():
             break

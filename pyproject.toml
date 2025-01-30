@@ -1,7 +1,7 @@
 [project]
 name = "rotviz"
 version = "0.1.1"
-description = "Mesh viewer tool"
+description = "Rotation visualization tool"
 authors = [
     {name = "Martin Cifka", email = "martin.cifka@cvut.cz"},
 ]
