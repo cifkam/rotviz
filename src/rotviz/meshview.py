@@ -86,7 +86,7 @@ class MeshViewer:
         self.pose = np.eye(4)
         self.pose[2,3] = self.depth
         self.pose[:3,:3] = np.round(pin.exp(np.array([-np.pi/2,0,0])))
-        self.camera_axis = None
+        self.cam_axis = self.pose[2,:3]/np.linalg.norm(self.pose[2,:3])
         
         self.depth_multiplier = [1, 5, 10]
         self.rotation_multiplier = np.deg2rad([1, 5, 10])
@@ -106,6 +106,7 @@ class MeshViewer:
         new_pose[2, 3] = self.depth
         new_pose[:3, :3] = pin.exp(np.array([self.roll, self.pitch, self.yaw])) @ self.pose[:3, :3]
         self.pose = new_pose
+        self.cam_axis = self.pose[2,:3]/np.linalg.norm(self.pose[2,:3])
     
     def _draw(self):
         rendered_color, depth = self.renderer.render(self.pose)
@@ -136,9 +137,15 @@ class MeshViewer:
             cv2.line(img, origin_2d, y_axis_2d, (0, 255, 0), 2)
             cv2.line(img, origin_2d, z_axis_2d, (255, 0, 0), 2)
 
-        # Display the overlay
-        cv2.imshow(self.window_name, img)
         
+        # Show the camera axis vector
+        cam_axis_text = ', '.join(['{0:.3f}'.format(self.cam_axis[i]) for i in range(3)])
+        cv2.putText(img, f"[{cam_axis_text}]", (20,40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+
+        # Display the image
+        cv2.imshow(self.window_name, img)
+
+
     def run(self, delay=100):
         for _ in self.run_yield(delay=delay):
             pass
@@ -163,7 +170,7 @@ class MeshViewer:
                 print('Depth multiplier:', self.depth_multiplier[self.last_depth_multipier_idx])
             elif key == ord('y'):
                 self.last_rotation_multipier_idx = (self.last_rotation_multipier_idx + 1) % len(self.rotation_multiplier)
-                print("Rotation multiplier:", self.rotation_multiplier[self.last_rotation_multipier_idx])
+                print("Rotation multiplier:", np.round(np.rad2deg(self.rotation_multiplier[self.last_rotation_multipier_idx]), 1))
             elif key == 27: # ESC
                 cv2.destroyAllWindows()
                 break
