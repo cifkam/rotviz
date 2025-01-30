@@ -9,6 +9,10 @@ import json
 from .meshview import MeshViewer
 from pathlib import Path
 
+import importlib.resources
+
+def get_asset_path(filename: str):
+    return importlib.resources.files("rotviz").joinpath("assets", filename)
 
 #"""
 def plot_sphere(ax, r=0.98, edgecolor="black", color="w"):
@@ -105,7 +109,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.mesh is None:
-        mesh_path = Path(__file__).parent / 'cube.ply'
+        
+        mesh_path = get_asset_path('cube.ply')
         args.mesh = str(mesh_path)
 
     with open(args.data, 'r') as f:

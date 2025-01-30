@@ -4,14 +4,12 @@
 
 
 ```bash
-pip install git+ssh://git@github.com/cifkam/vizrot.git
+pip install git+ssh://git@github.com/cifkam/rotviz.git
 ```
 
 ### You can  use virtual environment
 
 ```bash
-pdm venv create -v --with-pip 3.11
-# or
 conda create -n venv python=3.11 'libstdcxx-ng>=13' -c conda-forge
 ```
 

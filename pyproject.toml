@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "rotviz"
 version = "0.1.1"
@@ -6,6 +10,7 @@ authors = [
     {name = "Martin Cifka", email = "martin.cifka@cvut.cz"},
 ]
 dependencies = [
+    "setuptools>=60",
     "opencv-python>=4.10.0.84",
     "pyrender>=0.1.45",
     "trimesh>=4.5.1",
@@ -18,5 +23,9 @@ requires-python = ">=3.10,<3.12"
 readme = "README.md"
 license = {text = "BSD2"}
 
-[tool.pdm]
-distribution = true
+[tool.setuptools]
+packages = ["rotviz"]  # Ensure your package is correctly identified
+include-package-data = true  # Ensures data files specified below are included
+
+[tool.setuptools.package-data]
+rotviz = ["assets/*"]
