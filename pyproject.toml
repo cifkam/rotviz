@@ -1,0 +1,22 @@
+[project]
+name = "rotviz"
+version = "0.1.1"
+description = "Mesh viewer tool"
+authors = [
+    {name = "Martin Cifka", email = "martin.cifka@cvut.cz"},
+]
+dependencies = [
+    "opencv-python>=4.10.0.84",
+    "pyrender>=0.1.45",
+    "trimesh>=4.5.1",
+    "scipy>=1.14.1",
+    "numpy>=1.26.4",
+    "pin>=2.7.0",
+    "matplotlib"
+]
+requires-python = ">=3.10,<3.12"
+readme = "README.md"
+license = {text = "BSD2"}
+
+[tool.pdm]
+distribution = true
