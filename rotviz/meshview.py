@@ -196,11 +196,24 @@ class MeshViewer:
                 elif key == ord('x'):
                     self.depth /= 1 + 0.01*self.depth_multiplier[self.last_depth_multipier_idx]
                 elif key == ord('f'): # reset the pose
-                    #self.pose = np.eye(4)
-                    #self.pose[2,3] = self.depth
-                    self.pose[:3,:3] = np.eye(3) #np.round(pin.exp(np.array([-np.pi/2,0,0])))
+                    self.pose[:3,:3] = np.eye(3)
 
-                if self.verbose and key in [ord(x) for x in ['s', 'w', 'a', 'd', 'e', 'q', 'f']]:
+                elif key == ord('1'): # (1,0,0)
+                    self.pose[:3,:3] = np.round(pin.exp(np.array([0,-np.pi/2,0]))) @ pin.exp(np.array([np.pi,0,0]))
+                elif key == ord('4'): # (-1,0,0)
+                    self.pose[:3,:3] = np.round(pin.exp(np.array([0,np.pi/2,0]))) @ pin.exp(np.array([np.pi,0,0]))
+
+                elif key == ord('2'): # (0,1,0)
+                    self.pose[:3,:3] = np.round(pin.exp(np.array([np.pi/2,0,0])) @ pin.exp(np.array([0,np.pi/2,0])))
+                elif key == ord('5'):  # (0,-1,0)
+                    self.pose[:3,:3] = np.round(pin.exp(np.array([-np.pi/2,0,0])) @ pin.exp(np.array([0,np.pi/2,0])))
+
+                elif key == ord('3'): # (0,0,1)
+                    self.pose[:3,:3] = np.eye(3)
+                elif key == ord('6'): # (0,0,-1)
+                    self.pose[:3,:3] = np.round(pin.exp(np.array([np.pi,0,0])))
+
+                if self.verbose and key in [ord(x) for x in ['s', 'w', 'a', 'd', 'e', 'q']]:
                     print('Camera forward axis:', self.cam_axis)
                 self._update_pose()
                 self._draw()

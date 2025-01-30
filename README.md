@@ -38,5 +38,14 @@ e - rotate by -1*rotation_multiplier degrees along camera z
 
 f - reset rotation
 
+1 - set camera forward axis to +x, i.e. [ 1,  0,  0]
+4 - set camera forward axis to -x, i.e. [-1,  0,  0]
+
+2 - set camera forward axis to +y, i.e. [ 0,  1,  0]
+5 - set camera forward axis to -y, i.e. [ 0, -1,  0]
+
+3 - set camera forward axis to +z, i.e. [ 0,  0,  1]
+6 - set camera forward axis to -z, i.e. [ 0,  0, -1]
+
 esc - exit
 ```

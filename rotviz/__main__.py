@@ -21,48 +21,6 @@ def plot_sphere(ax, r=0.98, edgecolor="black", color="w"):
     y = np.sin(u)*np.sin(v)*r
     z = np.cos(v)*r
     ax.plot_surface(x, y, z, color=color, edgecolor=edgecolor)
-"""
-def plot_sphere_v2(ax, r, lat_res, long_res, rstride,cstride, edgecolor="black", color="w"):
-     latitude  = np.linspace(0, 2*np.pi, lat_res)
-     longitude = np.linspace(-np.pi, np.pi, long_res)
-     x_values = np.outer(np.sin(latitude), np.sin(longitude)) * r
-     y_values = np.outer(np.cos(latitude), np.sin(longitude)) * r
-     z_values = np.outer(np.ones(lat_res), np.cos(longitude)) * r
- 
-     ax.plot_wireframe(x_values,y_values,z_values,rstride=rstride,cstride=cstride, edgecolor=edgecolor, color=color)
-
-def plot_sphere(ax, r=0.98, edgecolor="black", color="w"):
-    plot_sphere_v2(ax, r, 30, 12, 0, 2, color=edgecolor)
-    plot_sphere_v2(ax, r, 12, 30, 1, 0, color=edgecolor)
-#"""
-
-
-def sample_rotations(n_poses):
-    from scipy.spatial.transform import Rotation as Rot
-    phi = np.sqrt(2.0)
-    psi = 1.533751168755204288118041
-    
-    Q = np.empty(shape=(n_poses,4), dtype=float)
-    rotations = []
-    mesh_poses = []
-    for i in range(n_poses):
-        s = i+0.5
-        r = np.sqrt(s/n_poses)
-        R = np.sqrt(1.0-s/n_poses)
-        alpha = 2.0 * np.pi * s / phi
-        beta = 2.0 * np.pi * s / psi
-        Q[i,0] = r*np.sin(alpha)
-        Q[i,1] = r*np.cos(alpha)
-        Q[i,2] = R*np.sin(beta)
-        Q[i,3] = R*np.cos(beta)
-
-        rotations.append(Rot.from_quat(Q[i]).as_matrix())
-
-        #mesh_pose = np.eye(4)
-        #mesh_pose[:3, 3] = np.array([0, 0, 1.1])
-        #mesh_pose[:3, :3] = self.rotations[-1]
-        #self.mesh_poses.append(mesh_pose)
-    return np.array(rotations)
 
 
 def fade_colors_with_distance(pts, base_colors, ax):
