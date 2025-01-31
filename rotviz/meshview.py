@@ -1,13 +1,11 @@
-import cv2
-import os
-import numpy as np
-import pyrender
-import trimesh
-import pinocchio as pin
 from argparse import ArgumentParser
 from pathlib import Path
-from functools import partial
-from scipy.spatial.transform import Rotation, Slerp
+
+import cv2
+import numpy as np
+import pinocchio as pin
+import pyrender
+import trimesh
 from pyrender.constants import RenderFlags
 
 
@@ -198,22 +196,22 @@ class MeshViewer:
                 elif key == ord('f'): # reset the pose
                     self.pose[:3,:3] = np.eye(3)
 
-                elif key == ord('1'): # (1,0,0)
-                    self.pose[:3,:3] = np.round(pin.exp(np.array([0,-np.pi/2,0]))) @ pin.exp(np.array([np.pi,0,0]))
-                elif key == ord('4'): # (-1,0,0)
-                    self.pose[:3,:3] = np.round(pin.exp(np.array([0,np.pi/2,0]))) @ pin.exp(np.array([np.pi,0,0]))
+                elif key == ord('1'): # align camera-forward with (1,0,0)
+                    self.pose[:3,:3] = pin.exp(np.array([0,-np.pi/2,0]))
+                elif key == ord('4'): # align camera-forward with (-1,0,0)
+                    self.pose[:3,:3] = pin.exp(np.array([0,np.pi/2,0]))
 
-                elif key == ord('2'): # (0,1,0)
-                    self.pose[:3,:3] = np.round(pin.exp(np.array([np.pi/2,0,0])) @ pin.exp(np.array([0,np.pi/2,0])))
-                elif key == ord('5'):  # (0,-1,0)
-                    self.pose[:3,:3] = np.round(pin.exp(np.array([-np.pi/2,0,0])) @ pin.exp(np.array([0,np.pi/2,0])))
+                elif key == ord('2'): # align camera-forward with (0,1,0)
+                    self.pose[:3,:3] = pin.exp(np.array([np.pi/2,0,0]))
+                elif key == ord('5'): # align camera-forward with (0,-1,0)
+                    self.pose[:3,:3] = pin.exp(np.array([-np.pi/2,0,0]))
 
-                elif key == ord('3'): # (0,0,1)
+                elif key == ord('3'): # align camera-forward with (0,0,1)
                     self.pose[:3,:3] = np.eye(3)
-                elif key == ord('6'): # (0,0,-1)
-                    self.pose[:3,:3] = np.round(pin.exp(np.array([np.pi,0,0])))
+                elif key == ord('6'): # align camera-forward with (0,0,-1)
+                    self.pose[:3,:3] = pin.exp(np.array([np.pi,0,0]))
 
-                if self.verbose and key in [ord(x) for x in ['s', 'w', 'a', 'd', 'e', 'q']]:
+                if self.verbose and key in [ord(x) for x in ['w', 's', 'a', 'd']]:
                     print('Camera forward axis:', self.cam_axis)
                 self._update_pose()
                 self._draw()
